@@ -12,19 +12,18 @@ namespace Ripply.Scrapper.Scrappers
         public MyFirstScrapper()
         {
             this.SiteName = "MyFirst";
-            
             this.StartingUrl = "https://xxxxxxxxxxxx";
             this.ValidLinks = new [] { "" }; //This will only follow links that contain information specified in VlaidLinks
             this.ItemPage = new [] { "" }; //What does the url for the pages you wish find look like
             this.QueryStringIncludeOnly = new[] { "" }; //regex on querystring
         }
-
-
+        
         public override async Task Process(Response response)
         {
-			
-		}
-		
-	}
-	
+			Console.WriteLine($"Url:{response.Url}");
+            Console.WriteLine($"Document String:{response.ToString()}");
+            //response.Css("div", "class", "id");
+            //response.Meta("name");
+        }
+    }
 }
