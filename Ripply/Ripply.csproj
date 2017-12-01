@@ -5,6 +5,20 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <ApplicationIcon />
     <StartupObject />
+    <Version>0.0.2</Version>
+    <Authors>Michael Marriott</Authors>
+    <Company>Greyskull</Company>
+    <Product>Ripply</Product>
+    <Description>A .Net Web Crawler</Description>
+    <Copyright>Copyright 2017</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/michaelmarriott/Ripply</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/michaelmarriott/Ripply</RepositoryUrl>
+    <PackageTags>crawler scrapper</PackageTags>
+    <PackageReleaseNotes>Fixed versioning and Nuget Information</PackageReleaseNotes>
+    <AssemblyVersion>0.0.2.0</AssemblyVersion>
+    <FileVersion>0.0.2.0</FileVersion>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
