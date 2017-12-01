@@ -1,0 +1,9 @@
+/.vs/Ripply/v15/*.suo
+/.vs/Ripply/v15/Server/sqlite3/*.lock
+/.vs/Ripply/v15/Server/sqlite3/*.ide
+/.vs/Ripply/v15/Server/sqlite3/*.ide-shm
+/.vs/Ripply/v15/Server/sqlite3/*.ide-wal
+/obj
+/bin
+/Ripply/obj
+/Ripply/bin

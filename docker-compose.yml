@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  ripply.scrapper:
+    image: ripply.scrapper
+    build:
+      context: ./../Ripply.Scrapper/Ripply.Scrapper
+      dockerfile: Dockerfile
