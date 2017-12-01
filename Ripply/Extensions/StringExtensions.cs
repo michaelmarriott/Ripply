@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Ripply
+namespace Ripply.Extensions
 {
     public  static class StringExtensions
     {

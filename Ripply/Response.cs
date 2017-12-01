@@ -9,6 +9,11 @@ namespace Ripply
     {
         private readonly HtmlDocument _htmlDocument;
 
+        /// <summary>
+        /// Each page found executes to this method
+        /// </summary>
+        /// <param name="htmlDocument">An HtmlDocument of the response</param>
+        /// <param name="url">Url of the page</param>
         public Response(HtmlDocument htmlDocument, string url)
         {
             _htmlDocument = htmlDocument;

@@ -22,6 +22,7 @@ Building,Publishing and Running
 ---
 
 dotnet build
+
 dotnet publish
 
 dotnet run xxxxxxx -T update
@@ -37,8 +38,8 @@ Command line usage:
 -T {TypeOfScrapper}
 ---
 "Crawler" (Default), this would normally be run first to create a state file
-"Update", "this goes and seeks more valid pages and finds more products, from existing state"
-"ProductUpdate", this ues the statefile to update Products in list
+"Update", "this goes and seeks more valid pages and finds more items, from existing state"
+"ItemsUpdate", this ues the statefile to update Items in list
 
 
 
@@ -68,8 +69,8 @@ Implmentation (rather just use template)
         {
             this.SiteName = "MyScrapper";
             this.StartingUrl = "https://xxxxxxx/";
-            this.ValidLinks = new[] { "/xxxxxx/", "/product-view/" };
-            this.ItemPage = new[] { "/product-view/" };
+            this.ValidLinks = new[] { "/xxxxxx/", "/item-view/" };
+            this.ItemPage = new[] { "/item-view/" };
             this.QueryStringIncludeOnly = new[] { "page=([0-9]+)" };
         }
 
@@ -77,5 +78,5 @@ Implmentation (rather just use template)
         {
            //Do want you want to Response object
         }
-	}
+    }
 ```

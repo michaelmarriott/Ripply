@@ -20,7 +20,6 @@ namespace Ripply
             return 0.00;
         }
 
-
         public static string ReturnFirstMatch(string text, Expression[] expressions)
         {
 

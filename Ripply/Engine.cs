@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections;
+﻿using HtmlAgilityPack;
+using Ripply.Components;
+using Serilog;
+using Serilog.Core;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
-using Ripply.Components;
-using Serilog;
-using Serilog.Core;
 
 namespace Ripply
 {
@@ -30,10 +27,9 @@ namespace Ripply
         private bool newOnly = false;
         private Stopwatch _sw;
         private int totalcounter = 0;
-        private static int depth = 0;
 
-
-
+        List<Task> allTasks = new List<Task>();
+        SemaphoreSlim throttler = new SemaphoreSlim(initialCount: 10);
         ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
         public Engine()
         {
@@ -49,7 +45,7 @@ namespace Ripply
 
             IScrapper scrapper = null;
             string filename = "";
-            
+
             string method = "";
             Console.WriteLine($".....................................");
             Console.WriteLine($"{args[0]}");
@@ -57,34 +53,34 @@ namespace Ripply
             {
                 if (i == 0)
                 {
-                    scrapper = (IScrapper) Activator.CreateInstance(types.FirstOrDefault(x => x.Name == args[0]));
+                    scrapper = (IScrapper)Activator.CreateInstance(types.FirstOrDefault(x => x.Name == args[0]));
                 }
                 else
                 {
                     switch (args[i])
                     {
                         case "-T":
-                        {
-                            method = args[i + 1];
-                            i++;
-                            break;
-                        }
+                            {
+                                method = args[i + 1];
+                                i++;
+                                break;
+                            }
                         case "-F":
-                        {
-                            filename = args[i + 1];
-                            i++;
-                           break;
-                        }
+                            {
+                                filename = args[i + 1];
+                                i++;
+                                break;
+                            }
                         case "-N":
-                        {
-                            newOnly = true;
-                            break;
-                        }
+                            {
+                                newOnly = true;
+                                break;
+                            }
                         default:
-                        {
-                            Console.WriteLine($"Unknown parameter {args[i]}");
-                            return;
-                        }
+                            {
+                                Console.WriteLine($"Unknown parameter {args[i]}");
+                                return;
+                            }
                     }
                 }
             }
@@ -93,36 +89,37 @@ namespace Ripply
             {
                 case "":
                 case "crawl":
-                {
-                    await CrawlAsync(scrapper);
-                    break;
-                }
-                case "productupdate":
-                {
-                    await ProductsAsync(scrapper, filename);
-                    break;
-                }
+                    {
+                        await CrawlAsync(scrapper);
+                        break;
+                    }
+
                 case "update":
-                {
-                    await ProductListsAsync(scrapper, filename, newOnly);
-                    break;
-                }
+                    {
+                        await UpdateAsync(scrapper, filename, newOnly);
+                        break;
+                    }
+                case "itemsupdate":
+                    {
+                        await ItemsUpdateAsync(scrapper, filename);
+                        break;
+                    }
                 default:
-                {
-                    Console.WriteLine($"Unknown runtype {method}");
-                    break;
-                }
+                    {
+                        Console.WriteLine($"Unknown runtype {method}");
+                        break;
+                    }
             }
         }
 
-        public async Task CrawlAsync(IScrapper scrapper)
+        private async Task CrawlAsync(IScrapper scrapper)
         {
             _scrapper = scrapper;
             _siteBaseUrl = GetBaseUrl();
             await Execute(_scrapper.StartingUrl);
         }
 
-        public async Task ProductListsAsync(IScrapper scrapper, string filename = "", bool newOnly = false)
+        private async Task UpdateAsync(IScrapper scrapper, string filename = "", bool newOnly = false)
         {
             _scrapper = scrapper;
             _scrapper.NewOnly = newOnly;
@@ -136,7 +133,7 @@ namespace Ripply
             await Execute(_scrapper.StartingUrl);
         }
 
-        public async Task ProductsAsync(IScrapper scrapper, string filename = "", bool newOnly = false)
+        private async Task ItemsUpdateAsync(IScrapper scrapper, string filename = "", bool newOnly = false)
         {
             _scrapper = scrapper;
             _siteBaseUrl = GetBaseUrl();
@@ -145,8 +142,8 @@ namespace Ripply
                 filename = DefaultFileName();
             }
             string[] urlFile = File.ReadAllLines(filename);
-            var urls = urlFile.Select(s => s.Split(",")).Where(v=> v[1].Equals("True")).Select(v => v[0]).ToArray();
-            await ReadProducts(urls);
+            var urls = urlFile.Select(s => s.Split(",")).Where(v => v[1].Equals("True")).Select(v => v[0]).ToArray();
+            await ReadItems(urls);
         }
 
         private string DefaultFileName()
@@ -167,7 +164,7 @@ namespace Ripply
                     client.DefaultRequestHeaders.Add("user-agent", _userAgent);
                     HttpResponseMessage response = await client.GetAsync(EnsureCompleteUrl(_siteBaseUrl, href));
                     webcontent = await response.Content.ReadAsStringAsync();
-                    if (IsProductPage(url) && !newOnly)
+                    if (IsItemPage(url) && !newOnly)
                     {
                         var document = new HtmlDocument();
                         document.LoadHtml(webcontent);
@@ -176,6 +173,7 @@ namespace Ripply
                 }
                 AddUrlsToQueue(webcontent);
                 await TraverseBreadth();
+                _sw.Stop();
             }
             catch (Exception ex)
             {
@@ -184,21 +182,15 @@ namespace Ripply
             return _links;
         }
 
-        List<Task> allTasks = new List<Task>();
-        SemaphoreSlim throttler = new SemaphoreSlim(initialCount: 10);
-
         private async Task TraverseBreadth()
         {
-            depth++;
-          
             CheckStackTrace();
-            Console.WriteLine($"depth={depth}");
             while (queue.Count > 0)
             {
                 totalcounter++;
-                Console.WriteLine($"totalcounter={totalcounter}");
+                Console.WriteLine($"TotalCounter={totalcounter}");
+                Console.WriteLine($"QueueCount={queue.Count}");
                 Console.WriteLine($"ElapsedMilliseconds={_sw.Elapsed}");
-                Console.WriteLine($"queue={queue.Count}");
                 queue.TryDequeue(out var href);
                 Console.WriteLine(href);
                 Log.Information(href);
@@ -216,7 +208,7 @@ namespace Ripply
                                 traverseWebContent = await response.Content.ReadAsStringAsync();
                                 var document = new HtmlDocument();
                                 document.LoadHtml(traverseWebContent);
-                                if (IsProductPage(href))
+                                if (IsItemPage(href))
                                 {
                                     await _scrapper.Process(new Response(document, href));
                                 }
@@ -233,9 +225,7 @@ namespace Ripply
                             throttler.Release();
                         }
                     }));
-                depth--;
             }
-           
         }
 
         static void CheckStackTrace()
@@ -247,24 +237,7 @@ namespace Ripply
         private void AddUrlsToQueue(string webcontent)
         {
             MatchCollection matchs = Regex.Matches(webcontent, @"(<a.*?>.*?</a>)", RegexOptions.Singleline);
-            //Parallel.ForEach(matchs, (m) =>
-            //{
-            //    string value = ((Match) m).Groups[1].Value;
-            //    Match matchHrefAttribute = Regex.Match(value, @"href=\""(.*?)\""", RegexOptions.Singleline);
-            //    if (matchHrefAttribute.Success)
-            //    {
-            //        string href = CleanQueryStringUrl(matchHrefAttribute.Groups[1].Value);
-            //        if (IsValidLink(href))
-            //        {
-            //            if (_links.Add(href))
-            //            {
-            //                queue.Enqueue(href);
-            //            }
-            //        }
-            //    }
-            //});
-
-            foreach(var m in matchs)
+            foreach (var m in matchs)
             {
                 string value = ((Match)m).Groups[1].Value;
                 Match matchHrefAttribute = Regex.Match(value, @"href=\""(.*?)\""", RegexOptions.Singleline);
@@ -287,13 +260,13 @@ namespace Ripply
             if (_existingLinks.Contains(href))
                 return;
 
-            if (IsProductPage(href))
+            if (IsItemPage(href))
                 AddLink(href, true);
             else
                 AddLink(href, false);
         }
 
-        private async Task ReadProducts(string[] urls)
+        private async Task ReadItems(string[] urls)
         {
             var allTasks = new List<Task>();
             var throttler = new SemaphoreSlim(initialCount: 20);
@@ -312,7 +285,7 @@ namespace Ripply
                                 var traverseWebContent = await response.Content.ReadAsStringAsync();
                                 var document = new HtmlDocument();
                                 document.LoadHtml(traverseWebContent);
-                                if (IsProductPage(url))
+                                if (IsItemPage(url))
                                 {
                                     await _scrapper.Process(new Response(document, url));
                                 }
@@ -333,7 +306,7 @@ namespace Ripply
             {
                 return RemoveIgnore(url);
             }
-           
+
             var path = url.Split("?")[0];
             var querysting = url.Split("?")[1];
             if (_scrapper.QueryStringIncludeOnly != null)
@@ -360,7 +333,7 @@ namespace Ripply
                 return querysting;
 
             var tempQueryString = querysting;
-            
+
             foreach (var item in _scrapper.QueryStringIgnore)
             {
                 var ignore = Regex.Match(tempQueryString, item, RegexOptions.Singleline).ToString();
@@ -398,7 +371,7 @@ namespace Ripply
             return false;
         }
 
-        private bool IsProductPage(string link)
+        private bool IsItemPage(string link)
         {
             foreach (var itemPage in _scrapper.ItemPage)
             {
@@ -410,9 +383,9 @@ namespace Ripply
             return false;
         }
 
-        private void AddLink(string href, bool isProduct)
+        private void AddLink(string href, bool isItem)
         {
-            _linkSite.Create(_scrapper.SiteName, href, isProduct);
+            _linkSite.Create(_scrapper.SiteName, href, isItem);
         }
 
         private static string EnsureCompleteUrl(string site, string link)
