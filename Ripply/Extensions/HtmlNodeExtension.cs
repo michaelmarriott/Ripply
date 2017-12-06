@@ -5,14 +5,14 @@ namespace Ripply.Extensions
 {
     public static class HtmlNodeExtension
     {
-        public static HtmlNodeCollection Css(this HtmlNode node, string type, string property, string name)
+        public static HtmlNodeCollection Css(this HtmlNode node,string element, string attribute, string value)
         {
-            return node.SelectNodes($".//{type}[@{property}='{name}']");
+            return node.SelectNodes($".//{element}[@{attribute}='{value}']");
         }
 
-        public static HtmlNodeCollection Css(this HtmlNode node, string type)
+        public static HtmlNodeCollection Css(this HtmlNode node, string element)
         {
-            return node.SelectNodes($".//{type}");
+            return node.SelectNodes($".//{element}");
         }
 
         public static string ToString(this HtmlNode node)

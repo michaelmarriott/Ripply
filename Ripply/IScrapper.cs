@@ -15,13 +15,13 @@ namespace Ripply
 
          internal bool NewOnly;
 
-        public string[] ValidLinks { get; set; }
+        public string[] ValidPageUrlParts { get; set; }
 
-        public string[] InValidLinks { get; set; }
+        public string[] InValidPageUrlParts { get; set; }
 
-        public string[] ItemPage { get; set; }
+        public string[] ItemPageUrlParts { get; set; }
 
-        public string[] QueryStringIgnore { get; set; }
+        public string[] QueryStringPartRemove { get; set; }
 
         public string[] QueryStringIncludeOnly { get; set; }
 

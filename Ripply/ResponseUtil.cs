@@ -7,8 +7,12 @@ namespace Ripply
 {
     public class ResponseUtil
     {
-
-        private double ExtractPrice(string text)
+        /// <summary>
+        /// Extract Double from text
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns>double</returns>
+        private double ExtractDouble(string text)
         {
             var decimalsEquation = @"[0-9.]+";
             var regex = new Regex(decimalsEquation);
@@ -25,7 +29,7 @@ namespace Ripply
 
             foreach (var expression in expressions)
             {
-                Match match = Regex.Match(text, expression.Value,RegexOptions.IgnoreCase);
+                Match match = Regex.Match(text, expression.Value, RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
                     return expression.Name;

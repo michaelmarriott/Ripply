@@ -13,7 +13,7 @@ namespace Ripply.Scrapper.Scrappers
         {
             this.SiteName = "MyFirst";
             this.StartingUrl = "https://xxxxxxxxxxxx";
-            this.ValidLinks = new [] { "" }; //This will only follow links that contain information specified in VlaidLinks
+            this.ValidPageLinks = new [] { "" }; //This will only follow links that contain information specified in VlaidLinks
             this.ItemPage = new [] { "" }; //What does the url for the pages you wish find look like
             this.QueryStringIncludeOnly = new[] { "" }; //regex on querystring
         }

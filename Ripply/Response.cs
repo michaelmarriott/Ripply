@@ -22,6 +22,11 @@ namespace Ripply
 
         public string Url { get; }
         
+        /// <summary>
+        /// Gets the meta tag value
+        /// </summary>
+        /// <param name="name">Name of the meta tag</param>
+        /// <returns></returns>
         public string Meta(string name)
         {
             if (this._htmlDocument.DocumentNode.SelectSingleNode($"//meta[@itemprop='{name}']") != null)
@@ -31,10 +36,16 @@ namespace Ripply
             return this._htmlDocument.DocumentNode.SelectSingleNode($"//meta[@name='{name}']").Attributes["content"].Value;
         }
 
-        public HtmlNodeCollection Css(string type, string property, string name)
+        /// <summary>
+        /// Gets the HtmlNodeCollection
+        /// </summary>
+        /// <param name="element">The element to find (EG:div,spa,td...)</param>
+        /// <param name="attribute">The attribute to find (EG:style,class,id,...)</param>
+        /// <param name="value">The value of the attribute </param>
+        /// <returns></returns>
+        public HtmlNodeCollection Css(string element, string attribute, string value)
         {
-
-            return this._htmlDocument.DocumentNode.SelectNodes($"//{type}[@{property}='{name}']");
+            return this._htmlDocument.DocumentNode.SelectNodes($"//{element}[@{attribute}='{value}']");
         }
 
         public override string ToString()
