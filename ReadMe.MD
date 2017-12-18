@@ -32,7 +32,7 @@ dotnet run xxxxxxx -T update
 Command line usage:
 ---
 
-{NameOfScrapper} -T <{TypeOfScrapper} -F {OverridedefaultlocationofFile}
+{NameOfScrapper} -T {TypeOfScrapper} -F {OverridedefaultlocationofFile} -TD {NumberOfThreads(int)}
 
 
 -T {TypeOfScrapper}
@@ -41,7 +41,9 @@ Command line usage:
 "Update", "this goes and seeks more valid pages and finds more items, from existing state"
 "ItemsUpdate", this ues the statefile to update Items in list
 
-
+ -TD {NumberOfThreads(int)}
+ ---
+ Default is 10 threads
 
 
 Implmentation (rather just use template)

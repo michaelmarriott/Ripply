@@ -6,7 +6,7 @@ namespace Ripply.Scrapper
     {
         public static async Task Main(string[] args)
         {
-            var engine = new Engine();
+            var engine = new EngineContainer();
 
             if (args.Length > 0)
             {

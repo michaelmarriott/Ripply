@@ -2,25 +2,27 @@
 using System.Collections.Generic;
 using System.Text;
 using HtmlAgilityPack;
+using Ripply.Models;
 
 namespace Ripply
 {
-    public class Response
+    public class HtmlResponse : IResponse
     {
         private readonly HtmlDocument _htmlDocument;
+        public string Url { get; }
 
         /// <summary>
         /// Each page found executes to this method
         /// </summary>
         /// <param name="htmlDocument">An HtmlDocument of the response</param>
         /// <param name="url">Url of the page</param>
-        public Response(HtmlDocument htmlDocument, string url)
+        public HtmlResponse(HtmlDocument htmlDocument, string url)
         {
             _htmlDocument = htmlDocument;
             Url = url;
         }
 
-        public string Url { get; }
+      
         
         public string Meta(string name)
         {
@@ -39,7 +41,7 @@ namespace Ripply
 
         public override string ToString()
         {
-            return _htmlDocument.DocumentNode.InnerText;
+            return _htmlDocument.DocumentNode.InnerHtml;
         }
     }
 }
