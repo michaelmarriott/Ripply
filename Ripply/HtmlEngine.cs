@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using Ripply.Components;
+using Ripply.Util;
 using Serilog;
 using Serilog.Core;
 using System;
@@ -25,11 +26,11 @@ namespace Ripply
         private HashSet<string> _links = new HashSet<string>();
         private HashSet<string> _existingLinks = new HashSet<string>();
         private readonly ILinkSite _linkSite;
-        
+        private HtmlLinkHandler _htmlLinkHandler;
         private bool newOnly = false;
        
         List<Task> allTasks = new List<Task>();
-        SemaphoreSlim throttler;
+        SemaphoreSlim _throttler;
         ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
 
         private int totalcounter = 0;
@@ -41,7 +42,8 @@ namespace Ripply
         {
             _scrapper = scrapper;
             _linkSite = new LinkSiteFileWriter();
-            throttler = new SemaphoreSlim(initialCount: threads);
+            _throttler = new SemaphoreSlim(initialCount: threads);
+            _htmlLinkHandler = new HtmlLinkHandler(_scrapper);
         }
 
         public async Task CrawlAsync()
@@ -75,14 +77,13 @@ namespace Ripply
         }
 
 
-        private async Task<HashSet<string>> Execute(string url)
+        private async Task Execute(string url)
         {
             try
-
             {
                 _sw = Stopwatch.StartNew();
                 string webcontent;
-                string href = CleanQueryStringUrl(url);
+                string href = _htmlLinkHandler.CleanQueryStringUrl(url);
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.Add("user-agent", _userAgent);
@@ -92,7 +93,7 @@ namespace Ripply
                     }
                     HttpResponseMessage response = await client.GetAsync(EngineHelper.EnsureCompleteUrl(_siteBaseUrl, href));
                     webcontent = await response.Content.ReadAsStringAsync();
-                    if (IsItemPage(url) && !newOnly)
+                    if (_htmlLinkHandler.IsItemPage(url) && !newOnly)
                     {
                         var document = new HtmlDocument();
                         document.LoadHtml(webcontent);
@@ -107,7 +108,6 @@ namespace Ripply
             {
                 Console.WriteLine(ex.ToString());
             }
-            return _links;
         }
 
         private async Task TraverseBreadth()
@@ -122,7 +122,7 @@ namespace Ripply
                 queue.TryDequeue(out var href);
                 Console.WriteLine(href);
                 Log.Information(href);
-                await throttler.WaitAsync();
+                await _throttler.WaitAsync();
                 allTasks.Add(
                     Task.Run(async () =>
                     {
@@ -136,7 +136,7 @@ namespace Ripply
                                 traverseWebContent = await response.Content.ReadAsStringAsync();
                                 var document = new HtmlDocument();
                                 document.LoadHtml(traverseWebContent);
-                                if (IsItemPage(href))
+                                if (_htmlLinkHandler.IsItemPage(href))
                                 {
                                     await _scrapper.Process(new HtmlResponse(document, href));
                                 }
@@ -150,7 +150,7 @@ namespace Ripply
                         }
                         finally
                         {
-                            throttler.Release();
+                            _throttler.Release();
                         }
                     }));
             }
@@ -175,7 +175,7 @@ namespace Ripply
                                 var traverseWebContent = await response.Content.ReadAsStringAsync();
                                 var document = new HtmlDocument();
                                 document.LoadHtml(traverseWebContent);
-                                if (IsItemPage(url))
+                                if (_htmlLinkHandler.IsItemPage(url))
                                 {
                                     await _scrapper.Process(new HtmlResponse(document, url));
                                 }
@@ -195,7 +195,7 @@ namespace Ripply
             if (_existingLinks.Contains(href))
                 return;
 
-            if (IsItemPage(href))
+            if (_htmlLinkHandler.IsItemPage(href))
                 AddLink(href, true);
             else
                 AddLink(href, false);
@@ -215,8 +215,8 @@ namespace Ripply
                 Match matchHrefAttribute = Regex.Match(value, @"href=\""(.*?)\""", RegexOptions.Singleline);
                 if (matchHrefAttribute.Success)
                 {
-                    string href = CleanQueryStringUrl(matchHrefAttribute.Groups[1].Value);
-                    if (IsValidLink(href))
+                    string href = _htmlLinkHandler.CleanQueryStringUrl(matchHrefAttribute.Groups[1].Value);
+                    if (_htmlLinkHandler.IsValidLink(href))
                     {
                         if (_links.Add(href))
                         {
@@ -227,82 +227,6 @@ namespace Ripply
             }
         }
 
-        private string CleanQueryStringUrl(string url)
-        {
-            if (!url.Contains("?"))
-            {
-                return RemoveFromQueryString(url);
-            }
-
-            var path = url.Split("?")[0];
-            var querysting = url.Split("?")[1];
-            if (_scrapper.QueryStringIncludeOnly != null)
-            {
-                var tempQueryString = querysting;
-                foreach (var item in _scrapper.QueryStringIncludeOnly)
-                {
-                    querysting = Regex.Match(tempQueryString, item, RegexOptions.Singleline).ToString();
-                    if (!String.IsNullOrEmpty(querysting))
-                        break;
-                }
-            }
-            else
-            {
-                path = RemoveFromQueryString(url);
-                querysting = RemoveFromQueryString(querysting);
-            }
-            return $"{path}?{querysting}";
-        }
-
-        private bool IsItemPage(string link)
-        {
-            foreach (var itemPage in _scrapper.UrlContainsItem)
-            {
-                if (link.Contains(itemPage))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool IsValidLink(string link)
-        {
-            if (_scrapper.UrlContainsToFollow != null)
-            {
-                foreach (var invalidLink in _scrapper.UrlContainsToFollow)
-                {
-                    if (link.Contains(invalidLink))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            foreach (var validLink in _scrapper.UrlContainsToFollow)
-            {
-                if (link.Contains(validLink))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private string RemoveFromQueryString(string querysting)
-        {
-            if (_scrapper.QueryStringRemove == null)
-                return querysting;
-
-            var tempQueryString = querysting;
-
-            foreach (var item in _scrapper.QueryStringRemove)
-            {
-                var ignore = Regex.Match(tempQueryString, item, RegexOptions.Singleline).ToString();
-                if (!String.IsNullOrEmpty(ignore))
-                    querysting = querysting.Replace(ignore, "");
-            }
-            return querysting;
-        }
+    
     }
 }

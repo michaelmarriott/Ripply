@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Serilog;
+using Serilog.Core;
 
-namespace Ripply
+namespace Ripply.Util
 {
     public class ResponseUtil
     {
-
+        private static readonly Logger Log = new LoggerConfiguration().CreateLogger();
         private double ExtractPrice(string text)
         {
             var decimalsEquation = @"[0-9.]+";
@@ -37,24 +39,36 @@ namespace Ripply
         public static int? ReturnFirstMatchName(string text, Expression[] expressions)
         {
 
+
             foreach (var expression in expressions)
             {
+
                 var numericEquation = expression.Value;
                 var regex = new Regex(numericEquation);
                 Match match = regex.Match(text);
                 if (match.Success)
                 {
-                    if (expression.Name != null)
+                    try
                     {
-                        return Int32.Parse(match.Value.Replace(expression.Name, ""));
-                    }
-                    return Int32.Parse(match.Value);
+                        Console.WriteLine($"Text:{text} Expression: {expression.Value} Match:{match.Value}");
+                        if (expression.Name != null)
+                        {
 
+                            return Int32.Parse(match.Value.Replace(expression.Name, ""));
+                        }
+                        return Int32.Parse(match.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Match failed on Expression: {expression.Value} for text {text} with match result to int {match.Value}");
+                        return null;
+                    }
                 }
+
             }
             return null;
         }
-        
+
 
     }
 }

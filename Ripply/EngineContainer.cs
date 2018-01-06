@@ -1,17 +1,7 @@
-﻿using HtmlAgilityPack;
-using Ripply.Components;
-using Ripply.Models;
-using Serilog;
+﻿using Serilog;
 using Serilog.Core;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ripply
@@ -83,7 +73,7 @@ namespace Ripply
             DefaultScrapper scrapper = null;
             string filename = "";
             string method = "";
-            var threads = 0;
+            var threads = 10;
             var newOnly = false;
             var type = typeof(DefaultScrapper);
             var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -96,7 +86,8 @@ namespace Ripply
             {
                 if (i == 0)
                 {
-                    scrapper = (DefaultScrapper)Activator.CreateInstance(types.FirstOrDefault(x => x.Name == args[0]));
+                    var typed = types.FirstOrDefault(x => x.Name == args[0]);
+                    scrapper = (DefaultScrapper)Activator.CreateInstance(typed);
                 }
                 else
                 {
@@ -121,7 +112,7 @@ namespace Ripply
                             }
                         case "-TD":
                             {
-                                threads = Int32.Parse(args[i + 1].ToString());
+                                threads = Int32.Parse(args[i + 1]);
                                 i++;
                                 break;
                             }

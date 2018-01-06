@@ -19,7 +19,7 @@ namespace Ripply
         /// This method gets called to create the Body of the request message to be sent
         /// </summary>
         /// <returns></returns>
-        public virtual string GetBody()
+        public virtual string GetBodyRequest()
         {
             return null;
         }

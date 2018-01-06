@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Ripply
+namespace Ripply.Util
 {
     public static class EngineHelper
     {

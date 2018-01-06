@@ -1,8 +1,4 @@
 ﻿using Ripply.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ripply
 {
@@ -15,6 +11,7 @@ namespace Ripply
         public DefaultScrapper()
         {
             this.Request = new Request();
+            this.Request.Headers = new System.Collections.Generic.Dictionary<string, string>();
         }
 
      

@@ -9,12 +9,13 @@ namespace Ripply.Models
 
         public string Url { get; }
 
-        public dynamic Request { get; }
+        public string Request { get; }
 
-        public dynamic Content { get;  }
+        public string Content { get;  }
+        
 
 
-        public AjaxResponse(dynamic content, string url, dynamic request)
+        public AjaxResponse(string content, string url, string request)
         {
             Content = content;
             Url = url;
